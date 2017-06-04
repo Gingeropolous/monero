@@ -307,49 +307,11 @@ namespace cryptonote
     template<class t_core>
     int t_cryptonote_protocol_handler<t_core>::handle_notify_new_block(int command, NOTIFY_NEW_BLOCK::request& arg, cryptonote_connection_context& context)
   {
-    MLOG_P2P_MESSAGE("Received NOTIFY_NEW_BLOCK (hop " << arg.hop << ", " << arg.b.txs.size() << " txes)");
-    if(context.m_state != cryptonote_connection_context::state_normal)
-      return 1;
-    m_core.pause_mine();
-    std::list<block_complete_entry> blocks;
-    blocks.push_back(arg.b);
-    m_core.prepare_handle_incoming_blocks(blocks);
-    for(auto tx_blob_it = arg.b.txs.begin(); tx_blob_it!=arg.b.txs.end();tx_blob_it++)
+    MLOG_P2P_MESSAGE("Received NOTIFY_NEW_FULL_BLOCK (hop " << arg.hop << ", " << arg.b.txs.size() << " txes)");
     {
-      cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
-      m_core.handle_incoming_tx(*tx_blob_it, tvc, true, true, false);
-      if(tvc.m_verifivation_failed)
-      {
-        LOG_PRINT_CCONTEXT_L1("Block verification failed: transaction verification failed, dropping connection");
-        m_p2p->drop_connection(context);
-        m_core.cleanup_handle_incoming_blocks();
-        m_core.resume_mine();
-        return 1;
-      }
-    }
-
-    block_verification_context bvc = boost::value_initialized<block_verification_context>();
-    m_core.handle_incoming_block(arg.b.block, bvc); // got block from handle_notify_new_block
-    m_core.cleanup_handle_incoming_blocks(true);
-    m_core.resume_mine();
-    if(bvc.m_verifivation_failed)
-    {
-      LOG_PRINT_CCONTEXT_L0("Block verification failed, dropping connection");
+      LOG_PRINT_CCONTEXT_L0("Receiving full block from a non-fluffynet node, dropping connection");
       m_p2p->drop_connection(context);
       return 1;
-    }
-    if(bvc.m_added_to_main_chain)
-    {
-      ++arg.hop;
-      //TODO: Add here announce protocol usage
-      relay_block(arg, context);
-    }else if(bvc.m_marked_as_orphaned)
-    {
-      context.m_state = cryptonote_connection_context::state_synchronizing;
-      NOTIFY_REQUEST_CHAIN::request r = boost::value_initialized<NOTIFY_REQUEST_CHAIN::request>();
-      m_core.get_short_chain_history(r.block_ids);
-      LOG_PRINT_CCONTEXT_L2("-->>NOTIFY_REQUEST_CHAIN: m_block_ids.size()=" << r.block_ids.size() );
-      post_notify<NOTIFY_REQUEST_CHAIN>(r, context);
     }
 
     return 1;
@@ -656,7 +618,6 @@ namespace cryptonote
     {
       if(tx_idx < b.tx_hashes.size())
       {
-        MDEBUG("  tx " << b.tx_hashes[tx_idx]);
         txids.push_back(b.tx_hashes[tx_idx]);
       }
       else
@@ -1187,15 +1148,14 @@ skip:
     {
       if (peer_id && exclude_context.m_connection_id != context.m_connection_id)
       {
-        if(m_core.get_testnet() && (support_flags & P2P_SUPPORT_FLAG_FLUFFY_BLOCKS))
+        if(support_flags & P2P_SUPPORT_FLAG_FLUFFY_BLOCKS)
         {
           LOG_DEBUG_CC(context, "PEER SUPPORTS FLUFFY BLOCKS - RELAYING THIN/COMPACT WHATEVER BLOCK");
           fluffyConnections.push_back(context.m_connection_id);
         }
         else
         {
-          LOG_DEBUG_CC(context, "PEER DOESN'T SUPPORT FLUFFY BLOCKS - RELAYING FULL BLOCK");
-          fullConnections.push_back(context.m_connection_id);
+          LOG_DEBUG_CC(context, "PEER DOESN'T SUPPORT FLUFFY BLOCKS - NOT RELAYING BLOCK");
         }
       }
       return true;
@@ -1203,7 +1163,6 @@ skip:
 
     // send fluffy ones first, we want to encourage people to run that
     m_p2p->relay_notify_to_list(NOTIFY_NEW_FLUFFY_BLOCK::ID, fluffyBlob, fluffyConnections);
-    m_p2p->relay_notify_to_list(NOTIFY_NEW_BLOCK::ID, fullBlob, fullConnections);
 
     return 1;
   }
