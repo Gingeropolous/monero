@@ -36,8 +36,8 @@ debug: cmake-debug
 	cd build/debug && $(MAKE)
 
 debug-static:
-        mkdir -p build/debug
-        cd build/debug && cmake -D STATIC=ON -D ARCH="x86-64" -D BUILD_64=ON -D CMAKE_BUILD_TYPE=Debug ../.. && $(MAKE)
+	mkdir -p build/debug
+	cd build/debug && cmake -D STATIC=ON -D ARCH="x86-64" -D BUILD_64=ON -D CMAKE_BUILD_TYPE=Debug ../.. && $(MAKE)
 
 debug-test:
 	mkdir -p build/debug
