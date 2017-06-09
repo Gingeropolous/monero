@@ -464,7 +464,8 @@ bool WalletImpl::recoverFromKeys(const std::string &path,
     {
         if (has_spendkey) {
             m_wallet->generate(path, "", address, spendkey, viewkey);
-            LOG_PRINT_L1("Generated new wallet from keys");
+            setSeedLanguage(language);
+            LOG_PRINT_L1("Generated new wallet from keys with seed language: " + language);
         }
         else {
             m_wallet->generate(path, "", address, viewkey);
@@ -618,9 +619,24 @@ std::string WalletImpl::integratedAddress(const std::string &payment_id) const
     return m_wallet->get_account().get_public_integrated_address_str(pid, m_wallet->testnet());
 }
 
-std::string WalletImpl::privateViewKey() const
+std::string WalletImpl::secretViewKey() const
 {
     return epee::string_tools::pod_to_hex(m_wallet->get_account().get_keys().m_view_secret_key);
+}
+
+std::string WalletImpl::publicViewKey() const
+{
+    return epee::string_tools::pod_to_hex(m_wallet->get_account().get_keys().m_account_address.m_view_public_key);
+}
+
+std::string WalletImpl::secretSpendKey() const
+{
+    return epee::string_tools::pod_to_hex(m_wallet->get_account().get_keys().m_spend_secret_key);
+}
+
+std::string WalletImpl::publicSpendKey() const
+{
+    return epee::string_tools::pod_to_hex(m_wallet->get_account().get_keys().m_account_address.m_spend_public_key);
 }
 
 std::string WalletImpl::path() const
@@ -952,7 +968,7 @@ PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const 
                                                                           static_cast<uint32_t>(priority),
                                                                           extra, m_trustedDaemon);
             } else {
-                transaction->m_pending_tx = m_wallet->create_transactions_all(addr, fake_outs_count, 0 /* unlock_time */,
+                transaction->m_pending_tx = m_wallet->create_transactions_all(0, addr, fake_outs_count, 0 /* unlock_time */,
                                                                           static_cast<uint32_t>(priority),
                                                                           extra, m_trustedDaemon);
             }

@@ -50,7 +50,7 @@ This is the core implementation of Monero. It is open source and completely free
 
 As with many development projects, the repository on Github is considered to be the "staging" area for the latest changes. Before changes are merged into that branch on the main repository, they are tested by individual developers in their own branches, submitted as a pull request, and then subsequently tested by contributors who focus on testing and code reviews. That having been said, the repository should be carefully considered before using it in a production environment, unless there is a patch in the repository for a particular show-stopping issue you are experiencing. It is generally a better idea to use a tagged release for stability.
 
-**Anyone is welcome to contribute to Monero's codebase!** If you have a fix or code change, feel free to submit is as a pull request directly to the "master" branch. In cases where the change is relatively small or does not affect other parts of the codebase it may be merged in immediately by any one of the collaborators. On the other hand, if the change is particularly large or complex, it is expected that it will be discussed at length either well in advance of the pull request being submitted, or even directly on the pull request.
+**Anyone is welcome to contribute to Monero's codebase!** If you have a fix or code change, feel free to submit it as a pull request directly to the "master" branch. In cases where the change is relatively small or does not affect other parts of the codebase it may be merged in immediately by any one of the collaborators. On the other hand, if the change is particularly large or complex, it is expected that it will be discussed at length either well in advance of the pull request being submitted, or even directly on the pull request.
 
 ## Supporting the Project
 
@@ -80,6 +80,14 @@ There are also several mining pools that kindly donate a portion of their fees, 
 
 See [LICENSE](LICENSE).
 
+# Contributing
+
+If you want to help out, see [CONTRIBUTING](CONTRIBUTING.md) for a set of guidelines.
+
+## Vulnerability Response Process
+
+See [Vulnerability Response Process](VULNERABILITY_RESPONSE_PROCESS.md).
+
 ## Monero software updates and consensus protocol changes (hard fork schedule)
 
 Monero uses a fixed-schedule hard fork mechanism to implement new features. This means that users of Monero (end users and service providers) need to run current versions and update their software on a regular schedule. Here is the current schedule, versions, and compatibility.
@@ -90,12 +98,18 @@ Dates are provided in the format YYYY-MM-DD.
 | ----------------- | ----------------- | ---------------------- | -------------------------- | ------------------ |
 | 2016-09-21        | v3                | v0.9.4                 | v0.10.0                    | Splits coinbase into denominations  |
 | 2017-01-05        | v4                | v0.10.1                 | v0.10.2.1                   | Allow normal and RingCT transactions |
-| 2017-04-15        | v5                | v0.10.2.1               | v0.10.3                    | Adjusted minimum blocksize and fee algorithm      |
-| 2017-09-21        | v6                | Not determined as of 2017-03-06                | Not determined as of 2017-03-06                    | Allow only RingCT transactions      |
+| 2017-04-15        | v5                | v0.10.3.0               | v0.10.3.1                    | Adjusted minimum blocksize and fee algorithm      |
+| 2017-09-21        | v6                | Not determined as of 2017-03-27                | Not determined as of 2017-03-27                    | Allow only RingCT transactions      |
 
 ## Installing Monero from a Package
 
 Packages are available for
+
+* Ubuntu and [snap supported](https://snapcraft.io/docs/core/install) systems, via a community contributed build.
+
+    snap install monero --beta
+
+Installing a snap is very quick. Snaps are secure. They are isolated with all of their dependencies. Snaps also auto update when a new version is released.
 
 * Arch Linux (via [AUR](https://aur.archlinux.org/)):
   - Stable release: [`monero`](https://aur.archlinux.org/packages/monero)
@@ -193,7 +207,7 @@ invokes cmake commands as needed.
 
         HAVE_DOT=YES doxygen Doxyfile
 
-#### On the Raspberry Pi
+#### On the Raspberry Pi 2
 
 Tested on a Raspberry Pi 2 with a clean install of minimal Debian Jessie from https://www.raspberrypi.org/downloads/raspbian/
 
@@ -211,23 +225,23 @@ Tested on a Raspberry Pi 2 with a clean install of minimal Debian Jessie from ht
 * Install the latest version of boost (this may first require invoking `apt-get remove --purge libboost*` to remove a previous version if you're not using a clean install):
 ```
 	cd  
-	wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2  
-	tar xvfo boost_1_62_0.tar.bz2  
-	cd boost_1_62_0  
+	wget https://sourceforge.net/projects/boost/files/boost/1.64.0/boost_1_64_0.tar.bz2  
+	tar xvfo boost_1_64_0.tar.bz2  
+	cd boost_1_64_0  
 	./bootstrap.sh  
 	sudo ./b2  
 ```
 * Wait ~8 hours
-
+```
 	sudo ./bjam install
-
+```
 * Wait ~4 hours
 
 * Change to the root of the source code directory and build:
-
+```
         cd monero
         make release
-
+```
 * Wait ~4 hours
 
 * The resulting executables can be found in `build/release/bin`
@@ -350,7 +364,7 @@ monero-wallet-cli, and possibly monerod, if you get crashes refreshing.
 
 ## Internationalization
 
-See README.i18n
+See [README.i18n](README.i18n).
 
 ## Using Tor
 
@@ -377,10 +391,6 @@ While monerod and monero-wallet-cli do not use readline directly, most of the fu
 `rlwrap bin/monero-wallet-cli --wallet-file /path/to/wallet`
 
 Note: rlwrap will save things like your seed and private keys, if you supply them on prompt. You may want to not use rlwrap when you use simplewallet to restore from seed, etc.
-
-# Contributing
-
-If you want to help out, see CONTRIBUTING for a set of guidelines.
 
 # Debugging
 

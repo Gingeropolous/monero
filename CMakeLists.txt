@@ -27,6 +27,9 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
+if (IOS)
+    INCLUDE(CmakeLists_IOS.txt)
+endif()
 
 cmake_minimum_required(VERSION 2.8.7)
 
@@ -77,9 +80,10 @@ if (ARM_TEST STREQUAL "arm")
   endif()
 endif()
 
-if (ARM_ID STREQUAL "aarch64")
+if (ARM_ID STREQUAL "aarch64" OR ARM_ID STREQUAL "arm64" OR ARM_ID STREQUAL "armv8-a")
   set(ARM 1)
   set(ARM8 1)
+  set(ARCH "armv8-a")
 endif()
 
 if(WIN32 OR ARM)
@@ -312,7 +316,7 @@ else()
 endif()
 
 # Handle OpenSSL, used for sha256sum on binary updates
-if (APPLE)
+if (APPLE AND NOT IOS)
   if (NOT OpenSSL_DIR)
       EXECUTE_PROCESS(COMMAND brew --prefix openssl
         OUTPUT_VARIABLE OPENSSL_ROOT_DIR
@@ -322,7 +326,7 @@ if (APPLE)
 endif()
 
 find_package(OpenSSL REQUIRED)
-if(STATIC)
+if(STATIC AND NOT IOS)
   if(UNIX)
     set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};${CMAKE_DL_LIBS}")
   endif()
@@ -334,10 +338,12 @@ if (UNIX AND NOT APPLE)
   find_package(Threads)
 endif()
 
+add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
+
 add_subdirectory(external)
 
 # Final setup for miniupnpc
-if(UPNP_STATIC)
+if(UPNP_STATIC OR IOS)
   add_definitions("-DUPNP_STATIC")
 else()
   add_definitions("-DUPNP_DYNAMIC")
@@ -348,8 +354,9 @@ endif()
 include_directories(${UNBOUND_INCLUDE})
 link_directories(${UNBOUND_LIBRARY_DIRS})
 
-# Final setup for rapidjson
-include_directories(external/rapidjson)
+# Final setup for easylogging++
+include_directories(${EASYLOGGING_INCLUDE})
+link_directories(${EASYLOGGING_LIBRARY_DIRS})
 
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})
@@ -540,8 +547,9 @@ else()
 
   endif(ARM)
 
-  if(ANDROID AND NOT BUILD_GUI_DEPS STREQUAL "ON")
+  if(ANDROID AND NOT BUILD_GUI_DEPS STREQUAL "ON" OR IOS)
     #From Android 5: "only position independent executables (PIE) are supported" 
+    message(STATUS "Enabling PIE executable")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} -fPIE -pie")
@@ -650,7 +658,7 @@ list(APPEND EXTRA_LIBRARIES ${CMAKE_DL_LIBS})
 if(ANDROID)
   set(ATOMIC libatomic.a)
 endif()
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32")
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS)
   find_library(ATOMIC atomic)
   list(APPEND EXTRA_LIBRARIES ${ATOMIC})
 endif()

@@ -122,13 +122,15 @@ namespace cryptonote
     block bl = AUTO_VAL_INIT(bl);
     difficulty_type di = AUTO_VAL_INIT(di);
     uint64_t height = AUTO_VAL_INIT(height);
+    uint64_t expected_reward; //only used for RPC calls - could possibly be useful here too?
+
     cryptonote::blobdata extra_nonce;
     if(m_extra_messages.size() && m_config.current_extra_message_index < m_extra_messages.size())
     {
       extra_nonce = m_extra_messages[m_config.current_extra_message_index];
     }
 
-    if(!m_phandler->get_block_template(bl, m_mine_address, di, height, extra_nonce))
+    if(!m_phandler->get_block_template(bl, m_mine_address, di, height, expected_reward, extra_nonce))
     {
       LOG_ERROR("Failed to get_block_template(), stopping mining");
       return false;
@@ -377,6 +379,7 @@ namespace cryptonote
   void miner::pause()
   {
     CRITICAL_REGION_LOCAL(m_miners_count_lock);
+    MDEBUG("miner::pause: " << m_pausers_count << " -> " << (m_pausers_count + 1));
     ++m_pausers_count;
     if(m_pausers_count == 1 && is_mining())
       MDEBUG("MINING PAUSED");
@@ -385,6 +388,7 @@ namespace cryptonote
   void miner::resume()
   {
     CRITICAL_REGION_LOCAL(m_miners_count_lock);
+    MDEBUG("miner::resume: " << m_pausers_count << " -> " << (m_pausers_count - 1));
     --m_pausers_count;
     if(m_pausers_count < 0)
     {
@@ -812,9 +816,11 @@ namespace cryptonote
       const std::string POWER_SUPPLY_STATUS_PATHS[] = 
       {
         "/sys/class/power_supply/ACAD/online",
-        "/sys/class/power_supply/AC/online"        
+        "/sys/class/power_supply/AC/online",
+        "/sys/class/power_supply/AC0/online",
+        "/sys/class/power_supply/ADP0/online"
       };
-      
+
       for(const std::string& path : POWER_SUPPLY_STATUS_PATHS)
       {
         if( epee::file_io_utils::is_file_exist(path) )
@@ -823,7 +829,7 @@ namespace cryptonote
           break;
         }
       }
-      
+
       if( power_supply_path.empty() )
       {
         LOG_ERROR("Couldn't find battery/power status file, can't determine if plugged in!");

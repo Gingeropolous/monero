@@ -797,6 +797,14 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_transaction_pool_stats(const COMMAND_RPC_GET_TRANSACTION_POOL_STATS::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_STATS::response& res)
+  {
+    CHECK_CORE_BUSY();
+    m_core.get_pool_transaction_stats(res.pool_stats);
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_stop_daemon(const COMMAND_RPC_STOP_DAEMON::request& req, COMMAND_RPC_STOP_DAEMON::response& res)
   {
     // FIXME: replace back to original m_p2p.send_stop_signal() after
@@ -883,7 +891,7 @@ namespace cryptonote
     block b = AUTO_VAL_INIT(b);
     cryptonote::blobdata blob_reserve;
     blob_reserve.resize(req.reserve_size, 0);
-    if(!m_core.get_block_template(b, acc, res.difficulty, res.height, blob_reserve))
+    if(!m_core.get_block_template(b, acc, res.difficulty, res.height, res.expected_reward, blob_reserve))
     {
       error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
       error_resp.message = "Internal error: failed to create block template";
@@ -1585,6 +1593,52 @@ namespace cryptonote
     }
 
     res.status = "'update' not implemented yet";
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_relay_tx(const COMMAND_RPC_RELAY_TX::request& req, COMMAND_RPC_RELAY_TX::response& res, epee::json_rpc::error& error_resp)
+  {
+    if(!check_core_busy())
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_CORE_BUSY;
+      error_resp.message = "Core is busy.";
+      return false;
+    }
+
+    bool failed = false;
+    for (const auto &str: req.txids)
+    {
+      cryptonote::blobdata txid_data;
+      if(!epee::string_tools::parse_hexstr_to_binbuff(str, txid_data))
+      {
+        res.status = std::string("Invalid transaction id: ") + str;
+        failed = true;
+      }
+      crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
+
+      cryptonote::blobdata txblob;
+      bool r = m_core.get_pool_transaction(txid, txblob);
+      if (r)
+      {
+        cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+        NOTIFY_NEW_TRANSACTIONS::request r;
+        r.txs.push_back(txblob);
+        m_core.get_protocol()->relay_transactions(r, fake_context);
+        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+      }
+      else
+      {
+        res.status = std::string("Transaction not found in pool: ") + str;
+        failed = true;
+      }
+    }
+
+    if (failed)
+    {
+      return false;
+    }
+
+    res.status = CORE_RPC_STATUS_OK;
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------

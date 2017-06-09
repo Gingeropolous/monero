@@ -1,21 +1,21 @@
 # Copyright (c) 2014-2017, The Monero Project
-#
+# 
 # All rights reserved.
-#
+# 
 # Redistribution and use in source and binary forms, with or without modification, are
 # permitted provided that the following conditions are met:
-#
+# 
 # 1. Redistributions of source code must retain the above copyright notice, this list of
 #    conditions and the following disclaimer.
-#
+# 
 # 2. Redistributions in binary form must reproduce the above copyright notice, this list
 #    of conditions and the following disclaimer in the documentation and/or other
 #    materials provided with the distribution.
-#
+# 
 # 3. Neither the name of the copyright holder nor the names of its contributors may be
 #    used to endorse or promote products derived from this software without specific
 #    prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 # EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -26,47 +26,31 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(blockchain_db_sources
-  blockchain_db.cpp
-  lmdb/db_lmdb.cpp
-  )
+cmake_minimum_required(VERSION 2.8.7)
 
-if (BERKELEY_DB)
-  set(blockchain_db_sources
-  ${blockchain_db_sources}
-  berkeleydb/db_bdb.cpp
-  )
-endif()
+project(easylogging CXX)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(blockchain_db_headers)
+find_package(Threads)
 
-set(blockchain_db_private_headers
-  blockchain_db.h
-  lmdb/db_lmdb.h
-  )
+add_library(easylogging
+  easylogging++.cc)
 
-if (BERKELEY_DB)
-  set(blockchain_db_private_headers
-  ${blockchain_db_private_headers}
-  berkeleydb/db_bdb.h
-  )
-endif()
-
-monero_private_headers(blockchain_db
-  ${crypto_private_headers})
-monero_add_library(blockchain_db
-  ${blockchain_db_sources}
-  ${blockchain_db_headers}
-  ${blockchain_db_private_headers})
-target_link_libraries(blockchain_db
-  PUBLIC
-    common
-    cncrypto
-    ringct
-    ${LMDB_LIBRARY}
-    ${BDB_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_THREAD_LIBRARY}
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(easylogging
   PRIVATE
-    ${EXTRA_LIBRARIES})
+    ${CMAKE_THREAD_LIBS_INIT})
+
+# GUI/libwallet install target
+if (BUILD_GUI_DEPS)
+    if(IOS)
+        set(lib_folder lib-${ARCH})
+    else()
+        set(lib_folder lib)
+    endif()
+    install(TARGETS easylogging
+        ARCHIVE DESTINATION ${lib_folder})
+endif()
+

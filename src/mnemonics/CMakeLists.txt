@@ -33,6 +33,7 @@ set(mnemonics_headers)
 
 set(mnemonics_private_headers
   electrum-words.h
+  chinese_simplified.h
   english.h
   dutch.h
   french.h
@@ -40,7 +41,7 @@ set(mnemonics_private_headers
   italian.h
   japanese.h
   language_base.h
-  old_english.h
+  english_old.h
   portuguese.h
   russian.h
   singleton.h
@@ -54,6 +55,7 @@ monero_add_library(mnemonics
   ${mnemonics_private_headers})
 target_link_libraries(mnemonics
   PUBLIC
+    easylogging
     ${Boost_SYSTEM_LIBRARY}
   PRIVATE
     ${EXTRA_LIBRARIES})
