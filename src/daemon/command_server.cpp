@@ -296,7 +296,7 @@ std::string t_command_server::get_commands_str()
 {
   std::stringstream ss;
   ss << "Monero '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << std::endl;
-  ss << "This is a Subnet Restricted Daemon made by Gingeropolous" << std::endl;
+  ss << "This is a Subnet Restricted Daemon by Gingeropolous. June 14th binaries. Even node" << std::endl;
   ss << "Commands: " << std::endl;
   std::string usage = m_command_lookup.get_usage();
   boost::replace_all(usage, "\n", "\n  ");
