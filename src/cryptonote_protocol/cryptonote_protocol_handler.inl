@@ -702,7 +702,7 @@ namespace cryptonote
         arg.txs.erase(tx_blob_it++);
     }
 
-    if(arg.txs.size())
+    if(arg.txs.size() && !(crypto<size_t>()%4))
     {
       //TODO: add announce usage here
       relay_transactions(arg, context);
