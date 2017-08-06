@@ -705,12 +705,11 @@ namespace cryptonote
     if(arg.txs.size())
     {
       //TODO: add announce usage here
-      if(!(crypto<size_t>()%4))
+    if (!crypto::rand<size_t>()%4)
       {
-	relay_transactions(arg, context);
+        relay_transactions(arg, context);
       }
     }
-
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------
