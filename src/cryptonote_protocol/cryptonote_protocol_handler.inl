@@ -618,6 +618,7 @@ namespace cryptonote
     {
       if(tx_idx < b.tx_hashes.size())
       {
+	MDEBUG("  tx " << b.tx_hashes[tx_idx]);
         txids.push_back(b.tx_hashes[tx_idx]);
       }
       else

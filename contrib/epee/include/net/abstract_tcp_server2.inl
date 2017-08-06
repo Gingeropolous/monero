@@ -214,6 +214,7 @@ PRAGMA_WARNING_DISABLE_VS(4355)
     auto self = safe_shared_from_this();
     if(!self)
       return false;
+    CRITICAL_REGION_LOCAL(self->m_self_refs_lock);
     if(m_was_shutdown)
       return false;
     m_self_refs.push_back(self);
